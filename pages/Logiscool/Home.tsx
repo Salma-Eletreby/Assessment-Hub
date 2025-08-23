@@ -23,7 +23,7 @@ const LogiscoolLandingPage: React.FC = () => {
 
   const handleAccess = () => {
     if (password === "admin123") {
-      router.push("/educenter/assessments");
+      router.push("/Logiscool/Teacher/Home");
     } else {
       setError("Incorrect password. Please try again.");
     }
