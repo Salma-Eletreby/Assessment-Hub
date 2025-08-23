@@ -11,7 +11,6 @@ const TeacherPortal: React.FC = () => {
         <title>Logiscool Teacher</title>
         <meta name="description" content="Logiscool's Teacher Portal" />
       </Head>
-      {/* Header */}
       <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#f5f0f2] px-10 py-3">
         <div className="flex items-center gap-3 sm:gap-4 text-[#171113] cursor-pointer" onClick={() => router.push("/")}>
           <div className="size-8 sm:size-10">
@@ -21,25 +20,23 @@ const TeacherPortal: React.FC = () => {
         </div>
         <div className="flex flex-1 justify-end gap-8">
           <div className="flex items-center gap-9">
+            <a className="text-[#181015] text-sm font-medium leading-normal hover:underline" href="/Logiscool/Home">
+              Back to Logiscool
+            </a>
             <a className="text-[#181015] text-sm font-medium leading-normal hover:underline" href="/Logiscool/Teacher/Home">
               Back to Teacher Portal
             </a>
           </div>
         </div>
       </header>
-
-      {/* Main Content */}
       <main className="flex flex-1 justify-center px-6 md:px-40 py-8 animate-fadeIn">
         <div className="flex flex-col max-w-[960px] flex-1">
-          {/* Title */}
           <div className="flex flex-wrap justify-between gap-3 p-4">
             <div className="flex min-w-72 flex-col gap-3">
               <p className="text-3xl font-bold text-[#111816]">Teacher Portal</p>
               <p className="text-sm text-[#568F87]">Manage your courses and workshops</p>
             </div>
           </div>
-
-          {/* Button Group */}
           <div className="flex justify-center">
             <div className="flex flex-col gap-3 w-full max-w-[480px] px-4 py-3">
               {[
