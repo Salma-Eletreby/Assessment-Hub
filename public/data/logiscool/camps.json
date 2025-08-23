@@ -63,11 +63,26 @@
             "type": "match",
             "question": "Match the Term",
             "matches": [
-              { "term": "Obstacle", "description": "A barrier or challenge in a game" },
-              { "term": "Dialogue", "description": "Text or speech used for storytelling" },
-              { "term": "Timer", "description": "Tracks time during gameplay" },
-              { "term": "Perspective", "description": "The view or angle from which you see a game" },
-              { "term": "Inventory", "description": "A collection of items a player holds" }
+              {
+                "term": "Obstacle",
+                "description": "A barrier or challenge in a game"
+              },
+              {
+                "term": "Dialogue",
+                "description": "Text or speech used for storytelling"
+              },
+              {
+                "term": "Timer",
+                "description": "Tracks time during gameplay"
+              },
+              {
+                "term": "Perspective",
+                "description": "The view or angle from which you see a game"
+              },
+              {
+                "term": "Inventory",
+                "description": "A collection of items a player holds"
+              }
             ]
           },
           {
@@ -84,7 +99,7 @@
       }
     ]
   },
-    {
+  {
     "id": "4ba037df-1b08-4327-90d6-183af02043f2",
     "name": "Minecraft Modding",
     "type": "Minecraft",
@@ -148,11 +163,26 @@
             "type": "match",
             "question": "Match the Term",
             "matches": [
-              { "term": "Obstacle", "description": "A barrier or challenge in a game" },
-              { "term": "Dialogue", "description": "Text or speech used for storytelling" },
-              { "term": "Timer", "description": "Tracks time during gameplay" },
-              { "term": "Perspective", "description": "The view or angle from which you see a game" },
-              { "term": "Inventory", "description": "A collection of items a player holds" }
+              {
+                "term": "Obstacle",
+                "description": "A barrier or challenge in a game"
+              },
+              {
+                "term": "Dialogue",
+                "description": "Text or speech used for storytelling"
+              },
+              {
+                "term": "Timer",
+                "description": "Tracks time during gameplay"
+              },
+              {
+                "term": "Perspective",
+                "description": "The view or angle from which you see a game"
+              },
+              {
+                "term": "Inventory",
+                "description": "A collection of items a player holds"
+              }
             ]
           },
           {
@@ -169,7 +199,7 @@
       }
     ]
   },
-      {
+  {
     "id": "8d015d5a-6e5d-4455-a44e-2dd639206736",
     "name": "Lego Essential Adventure",
     "type": "Robotics",
@@ -233,11 +263,26 @@
             "type": "match",
             "question": "Match the Term",
             "matches": [
-              { "term": "Obstacle", "description": "A barrier or challenge in a game" },
-              { "term": "Dialogue", "description": "Text or speech used for storytelling" },
-              { "term": "Timer", "description": "Tracks time during gameplay" },
-              { "term": "Perspective", "description": "The view or angle from which you see a game" },
-              { "term": "Inventory", "description": "A collection of items a player holds" }
+              {
+                "term": "Obstacle",
+                "description": "A barrier or challenge in a game"
+              },
+              {
+                "term": "Dialogue",
+                "description": "Text or speech used for storytelling"
+              },
+              {
+                "term": "Timer",
+                "description": "Tracks time during gameplay"
+              },
+              {
+                "term": "Perspective",
+                "description": "The view or angle from which you see a game"
+              },
+              {
+                "term": "Inventory",
+                "description": "A collection of items a player holds"
+              }
             ]
           },
           {
