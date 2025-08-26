@@ -11,7 +11,7 @@ const TeacherCamps: React.FC = () => {
   // Load JSON via API
   const loadJson = async () => {
     try {
-      const res = await fetch("/api/logiscool/file?name=camps");
+      const res = await fetch("/api/logiscool/file?name=LogiscoolCamps");
       if (!res.ok) throw new Error("Failed to load JSON");
       const data = await res.json();
       setJsonContent(JSON.stringify(data, null, 2));
@@ -29,7 +29,7 @@ const TeacherCamps: React.FC = () => {
   // Save JSON via API
   const handleSave = async () => {
     try {
-      const res = await fetch("/api/logiscool/file?name=camps", {
+      const res = await fetch("/api/logiscool/file?name=LogiscoolCamps", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: jsonContent,

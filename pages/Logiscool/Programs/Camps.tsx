@@ -43,12 +43,13 @@ const CampsPage: React.FC = () => {
     { title: "Long Workshops", link: "" },
   ];
 
-  useEffect(() => {
-    fetch("/data/logiscool/camps.json")
-      .then((res) => res.json())
-      .then((data: Camp[]) => setCamps(data))
-      .catch((err) => console.error("Error loading camps:", err));
-  }, []);
+useEffect(() => {
+  fetch("/api/logiscool/programs?type=camps")
+    .then((res) => res.json())
+    .then((data: Camp[]) => setCamps(data))
+    .catch((err) => console.error("Error loading camps:", err));
+}, []);
+
 
   const campTypes = ["All", ...Array.from(new Set(camps.map((c) => c.type)))];
 
