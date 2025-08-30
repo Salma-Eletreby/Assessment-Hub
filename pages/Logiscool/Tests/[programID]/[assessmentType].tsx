@@ -1,31 +1,31 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import Image from "next/image";
+import Head from "next/head";
+import Link from "next/link";
 
 // Navbar programs
-const programs = [
-  { title: "Camps", colors: ["#009cde", "#00b4f0"], link: "/Logiscool/Programs/Camps" },
-  { title: "Courses", colors: ["#a50050", "#d60070"], link: "/logiscool/courses" },
-  { title: "Short Courses", colors: ["#c4d600", "#e4f000"], link: "/logiscool/short-courses" },
-  { title: "One Day Workshops", colors: ["#009cde", "#00b4f0"], link: "/logiscool/one-day-workshops" },
-  { title: "Long Workshops", colors: ["#a50050", "#d60070"], link: "/logiscool/long-workshops" },
+const programCategories = [
+  { title: "Courses", link: "" },
+  { title: "Short Courses", link: "" },
+  { title: "Camps", link: "Logiscool/Programs/Camps" },
+  { title: "Workshops", link: "" },
+  { title: "Long Workshops", link: "" },
 ];
 
 const AssessmentPage: React.FC = () => {
   const router = useRouter();
+  const [showDialog, setShowDialog] = useState(false);
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const { programID, assessmentType } = router.query;
 
-  // Dropdown + teacher modal
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [showTeacherDialog, setShowTeacherDialog] = useState(false);
-  const [teacherPassword, setTeacherPassword] = useState("");
-  const [teacherError, setTeacherError] = useState("");
-  const dropdownTimeout = useRef<NodeJS.Timeout | null>(null);
-
-  // Assessment data
   const [questions, setQuestions] = useState<any[]>([]);
   const [campName, setCampName] = useState("");
+
+  const [answers, setAnswers] = useState<any>({});
+  const [submitted, setSubmitted] = useState(false);
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     if (!programID || !assessmentType) return;
@@ -35,9 +35,7 @@ const AssessmentPage: React.FC = () => {
       .then((data) => {
         const camp = data.find((c: any) => c.id === programID);
         if (!camp) return;
-
         setCampName(camp.name);
-
         const assessment = camp.assesments.find((a: any) => a.type === assessmentType);
         if (assessment) {
           setQuestions(assessment.questions);
@@ -46,186 +44,299 @@ const AssessmentPage: React.FC = () => {
       .catch((err) => console.error(err));
   }, [programID, assessmentType]);
 
-  const handleTeacherAccess = () => {
-    if (teacherPassword === "teacher123") {
-      setTeacherPassword("");
-      setTeacherError("");
-      setShowTeacherDialog(false);
-      router.push("/teacher/dashboard");
+  const handleChange = (qIdx: string | number, value: string) => {
+    setAnswers((prev: any) => ({ ...prev, [qIdx]: value }));
+  };
+
+const handleSubmit = () => {
+  const studentNameInput = (document.getElementById("studentName") as HTMLInputElement).value.trim();
+  if (!studentNameInput) {
+    alert("Please enter the student's name.");
+    return;
+  }
+
+  // Validate all questions are answered
+  for (let idx = 0; idx < questions.length; idx++) {
+    const q = questions[idx];
+    switch (q.type) {
+      case "mcq":
+        if (!answers[idx]) {
+          alert(`Please answer question ${idx + 1}.`);
+          return;
+        }
+        break;
+
+      case "fill-in":
+        if (!q.blanks.every((b: any, i: number) => answers[`${idx}-${i}`])) {
+          alert(`Please fill in all blanks for question ${idx + 1}.`);
+          return;
+        }
+        break;
+
+      case "match":
+        if (!q.matches.every((m: any, i: number) => answers[`${idx}-${i}`])) {
+          alert(`Please complete all matches for question ${idx + 1}.`);
+          return;
+        }
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  // All validations passed
+  setSubmitted(true);
+
+  // Optional: calculate score
+  let total = questions.length;
+  let correctCount = 0;
+
+  questions.forEach((q, idx) => {
+    switch (q.type) {
+      case "mcq":
+        if (answers[idx] === q.answer) correctCount++;
+        break;
+
+      case "fill-in":
+        if (q.blanks.every((b: any, i: number) => answers[`${idx}-${i}`] === b.answer)) correctCount++;
+        break;
+
+      case "match":
+        if (q.matches.every((m: any, i: number) => answers[`${idx}-${i}`] === m.description)) correctCount++;
+        break;
+
+      default:
+        break;
+    }
+  });
+
+  alert(`Assessment submitted!`);
+};
+
+
+  const openDialog = () => {
+    setPassword("");
+    setError("");
+    setShowDialog(true);
+  };
+  const closeDialog = () => {
+    setPassword("");
+    setError("");
+    setShowDialog(false);
+  };
+  const handleAccess = () => {
+    if (password === "admin123") {
+      router.push("/Logiscool/Teacher/Home");
     } else {
-      setTeacherError("Incorrect password. Please try again.");
+      setError("Incorrect password. Please try again.");
     }
   };
 
-  const closeTeacherDialog = () => {
-    setShowTeacherDialog(false);
-    setTeacherPassword("");
-    setTeacherError("");
-  };
-
   return (
-    <div className="flex flex-col min-h-screen bg-white text-[#00426a]">
+    <div className="flex flex-col min-h-screen bg-white text-[#064232]">
+      <Head>
+        <title>Assessment</title>
+        <meta name="description" content="Logiscool Assessment Page" />
+      </Head>
+
       {/* Navbar */}
-      <nav className="bg-[#00426a]/90 backdrop-blur-sm px-6 py-4 flex items-center justify-between shadow-md relative z-50">
-        <div className="flex items-center gap-3">
-          <Image
-            src="/whiteLogo.png"
-            alt="Logo"
-            width={100}
-            height={40}
-            className="cursor-pointer"
-            onClick={() => router.push("/Logiscool/Home")}
-          />
-          <h1
-            className="text-xl font-bold cursor-pointer hover:underline text-white"
-            onClick={() => router.push("/")}
-          >
-            Salma
-          </h1>
-        </div>
-
-        <div className="flex items-center gap-6">
-          {/* Programs dropdown */}
-          <div
-            className="relative"
-            onMouseEnter={() => {
-              if (dropdownTimeout.current) clearTimeout(dropdownTimeout.current);
-              setShowDropdown(true);
-            }}
-            onMouseLeave={() => {
-              dropdownTimeout.current = setTimeout(() => {
-                setShowDropdown(false);
-              }, 200);
-            }}
-          >
-            <button className="hover:underline font-medium flex items-center gap-1 text-white">
-              Programs
-              <span className="text-xs">▼</span>
-            </button>
-
-            {showDropdown && (
-              <div className="absolute right-0 top-full mt-2 bg-white text-[#00426a] rounded shadow-lg z-[9999] max-h-60 overflow-y-auto min-w-[180px]">
-                {programs.map((p) => (
-                  <a
-                    key={p.title}
-                    href={p.link}
-                    className="block px-4 py-2 hover:bg-[#009cde]/30"
-                  >
-                    {p.title}
-                  </a>
-                ))}
-              </div>
-            )}
+      <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#f5f0f2] px-10 py-3">
+        <div className="flex items-center gap-3 sm:gap-4 text-[#171113] cursor-pointer" onClick={() => router.push("/")}>
+          <div className="size-8 sm:size-10">
+            <img src="https://img.icons8.com/?size=100&id=cGcRDueIKQkF&format=png&color=000000" alt="icon" width="48" height="48" />
           </div>
-
-          {/* Teacher button */}
-          <button
-            onClick={() => {
-              setShowTeacherDialog(true);
-              setTeacherPassword("");
-              setTeacherError("");
-            }}
-            className="hover:underline font-medium text-white"
-          >
-            Teacher
+          <h2 className="text-base sm:text-lg font-bold leading-tight tracking-[-0.015em]">Assessments Hub</h2>
+        </div>
+        <div className="flex flex-1 justify-end gap-8">
+          <div className="flex items-center gap-9">
+            {programCategories.map((item) => (
+              <Link key={item.title} className="text-[#181015] text-sm font-medium leading-normal hover:underline" href={`/${item.link}`}>
+                {item.title}
+              </Link>
+            ))}
+          </div>
+          <button onClick={openDialog} className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#a80057] text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-[#900047] transition transform hover:scale-110 hover:shadow-2xl">
+            <span className="truncate">Sign In to Teacher Portal</span>
           </button>
         </div>
-      </nav>
+      </header>
 
       {/* Main content */}
-      <main className="flex-grow p-6 max-w-3xl mx-auto">
+      <main className="flex-grow p-6 max-w-3xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold mb-6 text-center">
           {campName} – {assessmentType?.toString().toUpperCase()} Assessment
         </h1>
+        <div className="mb-4 text-center text-red-600">{formError}</div>
+
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-center gap-10">
+          <div className="flex flex-col">
+            <label htmlFor="studentName" className="font-medium text-sm mb-1">
+              Student Name
+            </label>
+            <input id="studentName" type="text" placeholder="Enter your name" className="px-3 py-2 border border-[#568F87] rounded bg-[#FFF5F2] focus:outline-none focus:ring-2 focus:ring-[#568F87]" />
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="assessmentDate" className="font-medium text-sm mb-1">
+              Date
+            </label>
+            <input
+              id="assessmentDate"
+              type="date"
+              defaultValue={new Date().toISOString().split("T")[0]}
+              className="px-3 py-2 border border-[#568F87] rounded bg-[#FFF5F2] focus:outline-none focus:ring-2 focus:ring-[#568F87]"
+            />
+          </div>
+        </div>
 
         {questions.map((q, idx) => {
+          const userAnswer = answers[idx];
           switch (q.type) {
             case "mcq":
               return (
-                <div key={idx} className="mb-6">
-                  <p className="font-medium mb-2">{idx + 1}. {q.question}</p>
-                  <div className="flex flex-col gap-2 ml-4">
-                    {q.options.map((opt: string, i: number) => (
-                      <label key={i} className="flex items-center gap-2">
-                        <input type="radio" name={`q-${idx}`} value={opt} className="accent-[#009cde]" />
-                        {opt}
-                      </label>
-                    ))}
+                <div key={idx} className="p-4 rounded-lg bg-[#f9f9f9] shadow-md">
+                  <p className="font-semibold mb-2">{idx + 1}. {q.question}</p>
+                  <div className="flex flex-col gap-2">
+                    {q.options.map((opt: string, i: number) => {
+                      const isCorrect = submitted && opt === q.answer;
+                      const isWrong = submitted && opt === userAnswer && userAnswer !== q.answer;
+                      return (
+                        <label key={i} className={`flex items-center gap-2 p-1 rounded ${isCorrect ? "bg-green-100" : ""} ${isWrong ? "bg-red-100" : ""}`}>
+                          <input 
+                            type="radio" 
+                            name={`q-${idx}`} 
+                            value={opt} 
+                            className="accent-[#568F87]"
+                            onChange={() => handleChange(idx, opt)}
+                            disabled={submitted}
+                          />
+                          {opt} {isCorrect && "✅"} {isWrong && "❌"}
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
               );
-            case "fill-in":
+
+            case "fill-in": {
+              const allCorrectAnswers: string[] = q.blanks.map((b: any) => b.answer);
               return (
-                <div key={idx} className="mb-6">
-                  <p className="font-medium mb-2">{idx + 1}. Fill in the blanks:</p>
-                  {q.blanks.map((b: any, i: number) => (
-                    <input
-                      key={i}
-                      type="text"
-                      placeholder={b.sentence}
-                      className="mt-1 px-3 py-2 border rounded w-full mb-1"
-                    />
-                  ))}
+                <div key={idx} className="p-4 rounded-lg bg-[#f9f9f9] shadow-md">
+                  <p className="font-semibold mb-1">{idx + 1}. {q.question}</p>
+                  <p className="text-sm text-gray-600 italic mb-2">Each answer is used only once.</p>
+                  <ul className="ml-6 list-disc space-y-2">
+                    {q.blanks.map((b: any, i: number) => {
+                      const userVal = answers[`${idx}-${i}`];
+                      const correct = submitted && userVal === b.answer;
+                      const wrong = submitted && userVal && userVal !== b.answer;
+                      const parts = b.sentence.replace(b.answer, "___").split("___");
+                      return (
+                        <li key={i} className="text-base">
+                          {parts[0]}
+                          <select
+                            className={`mx-1 px-2 py-1 border rounded bg-[#FFF5F2] focus:outline-none focus:ring-2 focus:ring-[#568F87] ${correct ? "bg-green-100" : ""} ${wrong ? "bg-red-100" : ""}`}
+                            disabled={submitted}
+                            value={userVal || ""}
+                            onChange={(e) => handleChange(`${idx}-${i}`, e.target.value)}
+                          >
+                            <option value="">--Select--</option>
+                            {allCorrectAnswers.map((opt, j) => (
+                              <option key={j} value={opt}>{opt}</option>
+                            ))}
+                          </select>
+                          {correct && " ✅"} {wrong && " ❌"}
+                          {parts[1] || ""}
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
               );
-            case "match":
+            }
+
+            case "match": {
+              const allDescriptions: string[] = q.matches.map((m: any) => m.description);
               return (
-                <div key={idx} className="mb-6">
-                  <p className="font-medium mb-2">{idx + 1}. Match the terms:</p>
-                  {q.matches.map((m: any, i: number) => (
-                    <p key={i} className="ml-4 flex items-center gap-2 mb-1">
-                      <span>{m.term} →</span>
-                      <input type="text" placeholder={m.description} className="px-2 py-1 border rounded w-2/3" />
-                    </p>
-                  ))}
+                <div key={idx} className="p-4 rounded-lg bg-[#f9f9f9] shadow-md">
+                  <p className="font-semibold mb-1">{idx + 1}. {q.question}</p>
+                  <p className="text-sm text-gray-600 italic mb-2">Match each term to the correct meaning. Each meaning is used only once.</p>
+                  <ul className="ml-6 list-disc space-y-2">
+                    {q.matches.map((m: any, i: number) => {
+                      const userVal = answers[`${idx}-${i}`];
+                      const correct = submitted && userVal === m.description;
+                      const wrong = submitted && userVal && userVal !== m.description;
+                      return (
+                        <li key={i}>
+                          <div className="flex items-center gap-4">
+                            <span className="font-medium">{m.term}</span>
+                            <span className="text-gray-500">→</span>
+                            <select
+                              className={`px-2 py-1 border rounded bg-[#FFF5F2] focus:outline-none focus:ring-2 focus:ring-[#568F87] ${correct ? "bg-green-100" : ""} ${wrong ? "bg-red-100" : ""}`}
+                              disabled={submitted}
+                              value={userVal || ""}
+                              onChange={(e) => handleChange(`${idx}-${i}`, e.target.value)}
+                            >
+                              <option value="">--Select meaning--</option>
+                              {allDescriptions.map((desc, j) => (
+                                <option key={j} value={desc}>{desc}</option>
+                              ))}
+                            </select>
+                            {correct && " ✅"} {wrong && " ❌"}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
               );
-            case "open":
-              return (
-                <div key={idx} className="mb-6">
-                  <p className="font-medium mb-2">{idx + 1}. {q.question}</p>
-                  <textarea className="ml-4 mt-1 p-2 border rounded w-full" placeholder="Your answer here" />
-                </div>
-              );
+            }
+
             default:
               return null;
           }
         })}
+
+        {/* Submit Button */}
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={handleSubmit}
+            className="px-6 py-3 bg-[#568F87] text-white font-bold rounded-lg
+                       hover:bg-[#4a736b] transition-transform transition-colors
+                       transform hover:scale-110 hover:shadow-xl duration-300 ease-in-out"
+          >
+            Submit
+          </button>
+        </div>
       </main>
 
       {/* Teacher modal */}
-      {showTeacherDialog && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-[9999]">
-          <div className="bg-white text-[#00426a] p-6 rounded-lg shadow-xl w-80 text-center relative">
-            <button
-              onClick={closeTeacherDialog}
-              className="absolute top-2 right-2 text-gray-500 hover:text-black"
-            >
-              ✕
+      {showDialog && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
+          <div className="bg-white text-[#a80057] p-6 rounded-lg shadow-xl w-80 text-center animate-fadeIn">
+            <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 font-bold text-lg" onClick={closeDialog}>
+              ×
             </button>
 
-            <h2 className="text-xl font-bold mb-4">Teacher Access</h2>
-            <input
-              type="password"
-              placeholder="Enter password"
-              value={teacherPassword}
-              onChange={(e) => setTeacherPassword(e.target.value)}
-              className="border p-2 rounded w-full mb-3 focus:outline-none focus:ring-2 focus:ring-[#009cde]"
-            />
-            {teacherError && <p className="text-red-600 text-sm mb-3">{teacherError}</p>}
-            <button
-              onClick={handleTeacherAccess}
-              className="w-full bg-[#009cde] text-white py-2 rounded-lg font-medium hover:bg-[#007fb3] transition"
-            >
-              Enter
-            </button>
+            <h3 className="text-xl font-semibold mb-4">Enter Password</h3>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="w-full px-3 py-2 border rounded mb-4 focus:ring focus:ring-[#a80057] outline-none" />
+            {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
+            <div className="flex justify-center gap-4 mt-2">
+              <button onClick={handleAccess} className="bg-[#a80057] text-white px-4 py-2 rounded-lg hover:bg-[#910046] transition transform hover:scale-105">
+                Submit
+              </button>
+              <button onClick={closeDialog} className="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 transition">
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Footer */}
-      <footer className="bg-[#00426a]/90 text-center py-4 mt-auto">
-        <p className="text-sm text-white">&copy; {new Date().getFullYear()} © Copyright of Salma 2025</p>
+      <footer className="flex justify-center bg-[#fafafa]">
+        <div className="flex flex-col gap-6 px-5 py-5 text-center">
+          <p className="text-[#87646b] text-base">©2025 Salma. All rights reserved.</p>
+        </div>
       </footer>
     </div>
   );
