@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 // Navbar programs
 const programCategories = [
@@ -22,10 +24,8 @@ const AssessmentPage: React.FC = () => {
 
   const [questions, setQuestions] = useState<any[]>([]);
   const [campName, setCampName] = useState("");
-
   const [answers, setAnswers] = useState<any>({});
   const [submitted, setSubmitted] = useState(false);
-  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     if (!programID || !assessmentType) return;
@@ -37,9 +37,7 @@ const AssessmentPage: React.FC = () => {
         if (!camp) return;
         setCampName(camp.name);
         const assessment = camp.assesments.find((a: any) => a.type === assessmentType);
-        if (assessment) {
-          setQuestions(assessment.questions);
-        }
+        if (assessment) setQuestions(assessment.questions);
       })
       .catch((err) => console.error(err));
   }, [programID, assessmentType]);
@@ -48,72 +46,96 @@ const AssessmentPage: React.FC = () => {
     setAnswers((prev: any) => ({ ...prev, [qIdx]: value }));
   };
 
-const handleSubmit = () => {
-  const studentNameInput = (document.getElementById("studentName") as HTMLInputElement).value.trim();
-  if (!studentNameInput) {
-    alert("Please enter the student's name.");
-    return;
-  }
-
-  // Validate all questions are answered
-  for (let idx = 0; idx < questions.length; idx++) {
-    const q = questions[idx];
-    switch (q.type) {
-      case "mcq":
-        if (!answers[idx]) {
-          alert(`Please answer question ${idx + 1}.`);
-          return;
-        }
-        break;
-
-      case "fill-in":
-        if (!q.blanks.every((b: any, i: number) => answers[`${idx}-${i}`])) {
-          alert(`Please fill in all blanks for question ${idx + 1}.`);
-          return;
-        }
-        break;
-
-      case "match":
-        if (!q.matches.every((m: any, i: number) => answers[`${idx}-${i}`])) {
-          alert(`Please complete all matches for question ${idx + 1}.`);
-          return;
-        }
-        break;
-
-      default:
-        break;
+  const handleSubmit = async () => {
+    // Validate student name
+    const studentNameInput = (document.getElementById("studentName") as HTMLInputElement).value.trim();
+    if (!studentNameInput) {
+      alert("Please enter the student's name.");
+      return;
     }
-  }
 
-  // All validations passed
-  setSubmitted(true);
-
-  // Optional: calculate score
-  let total = questions.length;
-  let correctCount = 0;
-
-  questions.forEach((q, idx) => {
-    switch (q.type) {
-      case "mcq":
-        if (answers[idx] === q.answer) correctCount++;
-        break;
-
-      case "fill-in":
-        if (q.blanks.every((b: any, i: number) => answers[`${idx}-${i}`] === b.answer)) correctCount++;
-        break;
-
-      case "match":
-        if (q.matches.every((m: any, i: number) => answers[`${idx}-${i}`] === m.description)) correctCount++;
-        break;
-
-      default:
-        break;
+    // Validate all answers
+    for (let idx = 0; idx < questions.length; idx++) {
+      const q = questions[idx];
+      switch (q.type) {
+        case "mcq":
+          if (!answers[idx]) {
+            alert(`Please answer question ${idx + 1}.`);
+            return;
+          }
+          break;
+        case "fill-in":
+          if (!q.blanks.every((b: any, i: number) => answers[`${idx}-${i}`])) {
+            alert(`Please fill in all blanks for question ${idx + 1}.`);
+            return;
+          }
+          break;
+        case "match":
+          if (!q.matches.every((m: any, i: number) => answers[`${idx}-${i}`])) {
+            alert(`Please complete all matches for question ${idx + 1}.`);
+            return;
+          }
+          break;
+      }
     }
+
+    // Mark as submitted
+    setSubmitted(true)
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+
+const element = document.getElementById("assessment-main");
+const styleTags = Array.from(document.querySelectorAll("style, link[rel='stylesheet']"))
+  .map(el => el.outerHTML)
+  .join("\n");
+
+if (element) {
+  // Fill input/select values and checked states
+element.querySelectorAll("input, select").forEach((el) => {
+  if (el instanceof HTMLInputElement) {
+    // Text inputs
+    el.setAttribute("value", el.value);
+
+    // Radios and checkboxes
+    if (el.type === "radio" || el.type === "checkbox") {
+      if (el.checked) el.setAttribute("checked", "true");
+      else el.removeAttribute("checked");
+    }
+  } else if (el instanceof HTMLSelectElement) {
+    // Selects
+    Array.from(el.options).forEach(opt => {
+      if (opt.selected) opt.setAttribute("selected", "true");
+      else opt.removeAttribute("selected");
+    });
+  }
+});
+
+const clone = element.cloneNode(true) as HTMLElement;
+const submitBtn = Array.from(clone.querySelectorAll("button")).find(
+  btn => btn.textContent?.trim() === "Submit"
+);
+if (submitBtn) submitBtn.remove();
+  // Convert to HTML string
+  // const htmlString = element.outerHTML;
+  
+const htmlString = `
+  <html>
+    <head>${styleTags}</head>
+    <body>${clone.outerHTML}</body>
+  </html>
+`;
+
+  const fileName = `${studentNameInput}-${campName}-${assessmentType?.toString().toUpperCase()} Assessment.pdf`;
+
+  await fetch("/api/upload-assessment", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ html: htmlString, fileName }), // ✅ pass string, not element
   });
+}
 
-  alert(`Assessment submitted!`);
-};
 
+  };
 
   const openDialog = () => {
     setPassword("");
@@ -163,32 +185,23 @@ const handleSubmit = () => {
       </header>
 
       {/* Main content */}
-      <main className="flex-grow p-6 max-w-3xl mx-auto space-y-6">
+      <main id="assessment-main" className="flex-grow p-6 max-w-3xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold mb-6 text-center">
           {campName} – {assessmentType?.toString().toUpperCase()} Assessment
         </h1>
-        <div className="mb-4 text-center text-red-600">{formError}</div>
 
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-center gap-10">
           <div className="flex flex-col">
-            <label htmlFor="studentName" className="font-medium text-sm mb-1">
-              Student Name
-            </label>
+            <label htmlFor="studentName" className="font-medium text-sm mb-1">Student Name</label>
             <input id="studentName" type="text" placeholder="Enter your name" className="px-3 py-2 border border-[#568F87] rounded bg-[#FFF5F2] focus:outline-none focus:ring-2 focus:ring-[#568F87]" />
           </div>
           <div className="flex flex-col">
-            <label htmlFor="assessmentDate" className="font-medium text-sm mb-1">
-              Date
-            </label>
-            <input
-              id="assessmentDate"
-              type="date"
-              defaultValue={new Date().toISOString().split("T")[0]}
-              className="px-3 py-2 border border-[#568F87] rounded bg-[#FFF5F2] focus:outline-none focus:ring-2 focus:ring-[#568F87]"
-            />
+            <label htmlFor="assessmentDate" className="font-medium text-sm mb-1">Date</label>
+            <input id="assessmentDate" type="date" defaultValue={new Date().toISOString().split("T")[0]} className="px-3 py-2 border border-[#568F87] rounded bg-[#FFF5F2] focus:outline-none focus:ring-2 focus:ring-[#568F87]" />
           </div>
         </div>
 
+        {/* Questions */}
         {questions.map((q, idx) => {
           const userAnswer = answers[idx];
           switch (q.type) {
@@ -202,14 +215,7 @@ const handleSubmit = () => {
                       const isWrong = submitted && opt === userAnswer && userAnswer !== q.answer;
                       return (
                         <label key={i} className={`flex items-center gap-2 p-1 rounded ${isCorrect ? "bg-green-100" : ""} ${isWrong ? "bg-red-100" : ""}`}>
-                          <input 
-                            type="radio" 
-                            name={`q-${idx}`} 
-                            value={opt} 
-                            className="accent-[#568F87]"
-                            onChange={() => handleChange(idx, opt)}
-                            disabled={submitted}
-                          />
+                          <input type="radio" name={`q-${idx}`} value={opt} className="accent-[#568F87]" onChange={() => handleChange(idx, opt)} />
                           {opt} {isCorrect && "✅"} {isWrong && "❌"}
                         </label>
                       );
@@ -217,7 +223,6 @@ const handleSubmit = () => {
                   </div>
                 </div>
               );
-
             case "fill-in": {
               const allCorrectAnswers: string[] = q.blanks.map((b: any) => b.answer);
               return (
@@ -240,9 +245,7 @@ const handleSubmit = () => {
                             onChange={(e) => handleChange(`${idx}-${i}`, e.target.value)}
                           >
                             <option value="">--Select--</option>
-                            {allCorrectAnswers.map((opt, j) => (
-                              <option key={j} value={opt}>{opt}</option>
-                            ))}
+                            {allCorrectAnswers.map((opt, j) => <option key={j} value={opt}>{opt}</option>)}
                           </select>
                           {correct && " ✅"} {wrong && " ❌"}
                           {parts[1] || ""}
@@ -253,7 +256,6 @@ const handleSubmit = () => {
                 </div>
               );
             }
-
             case "match": {
               const allDescriptions: string[] = q.matches.map((m: any) => m.description);
               return (
@@ -277,9 +279,7 @@ const handleSubmit = () => {
                               onChange={(e) => handleChange(`${idx}-${i}`, e.target.value)}
                             >
                               <option value="">--Select meaning--</option>
-                              {allDescriptions.map((desc, j) => (
-                                <option key={j} value={desc}>{desc}</option>
-                              ))}
+                              {allDescriptions.map((desc, j) => <option key={j} value={desc}>{desc}</option>)}
                             </select>
                             {correct && " ✅"} {wrong && " ❌"}
                           </div>
@@ -290,7 +290,6 @@ const handleSubmit = () => {
                 </div>
               );
             }
-
             default:
               return null;
           }
@@ -300,9 +299,7 @@ const handleSubmit = () => {
         <div className="flex justify-center mt-6">
           <button
             onClick={handleSubmit}
-            className="px-6 py-3 bg-[#568F87] text-white font-bold rounded-lg
-                       hover:bg-[#4a736b] transition-transform transition-colors
-                       transform hover:scale-110 hover:shadow-xl duration-300 ease-in-out"
+            className="px-6 py-3 bg-[#568F87] text-white font-bold rounded-lg hover:bg-[#4a736b] transition-transform transform hover:scale-110 hover:shadow-xl duration-300 ease-in-out"
           >
             Submit
           </button>
@@ -313,20 +310,13 @@ const handleSubmit = () => {
       {showDialog && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
           <div className="bg-white text-[#a80057] p-6 rounded-lg shadow-xl w-80 text-center animate-fadeIn">
-            <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 font-bold text-lg" onClick={closeDialog}>
-              ×
-            </button>
-
+            <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 font-bold text-lg" onClick={closeDialog}>×</button>
             <h3 className="text-xl font-semibold mb-4">Enter Password</h3>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="w-full px-3 py-2 border rounded mb-4 focus:ring focus:ring-[#a80057] outline-none" />
             {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
             <div className="flex justify-center gap-4 mt-2">
-              <button onClick={handleAccess} className="bg-[#a80057] text-white px-4 py-2 rounded-lg hover:bg-[#910046] transition transform hover:scale-105">
-                Submit
-              </button>
-              <button onClick={closeDialog} className="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 transition">
-                Cancel
-              </button>
+              <button onClick={handleAccess} className="bg-[#a80057] text-white px-4 py-2 rounded-lg hover:bg-[#910046] transition transform hover:scale-105">Submit</button>
+              <button onClick={closeDialog} className="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 transition">Cancel</button>
             </div>
           </div>
         </div>
