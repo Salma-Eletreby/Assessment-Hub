@@ -3,10 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 
-// Navbar programs
 const programCategories = [
   { title: "Courses", link: "" },
   { title: "Short Courses", link: "" },
@@ -47,14 +44,12 @@ const AssessmentPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    // Validate student name
     const studentNameInput = (document.getElementById("studentName") as HTMLInputElement).value.trim();
     if (!studentNameInput) {
       alert("Please enter the student's name.");
       return;
     }
 
-    // Validate all answers
     for (let idx = 0; idx < questions.length; idx++) {
       const q = questions[idx];
       switch (q.type) {
@@ -79,62 +74,56 @@ const AssessmentPage: React.FC = () => {
       }
     }
 
-    // Mark as submitted
-    setSubmitted(true)
-    await new Promise(resolve => setTimeout(resolve, 50));
+    setSubmitted(true);
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
+    const element = document.getElementById("assessment-main");
+    const styleTags = Array.from(document.querySelectorAll("style, link[rel='stylesheet']"))
+      .map((el) => el.outerHTML)
+      .join("\n");
 
-const element = document.getElementById("assessment-main");
-const styleTags = Array.from(document.querySelectorAll("style, link[rel='stylesheet']"))
-  .map(el => el.outerHTML)
-  .join("\n");
+    if (element) {
+      // Fill input/select values and checked states
+      element.querySelectorAll("input, select").forEach((el) => {
+        if (el instanceof HTMLInputElement) {
+          // Text inputs
+          el.setAttribute("value", el.value);
 
-if (element) {
-  // Fill input/select values and checked states
-element.querySelectorAll("input, select").forEach((el) => {
-  if (el instanceof HTMLInputElement) {
-    // Text inputs
-    el.setAttribute("value", el.value);
+          // Radios and checkboxes
+          if (el.type === "radio" || el.type === "checkbox") {
+            if (el.checked) el.setAttribute("checked", "true");
+            else el.removeAttribute("checked");
+          }
+        } else if (el instanceof HTMLSelectElement) {
+          // Selects
+          Array.from(el.options).forEach((opt) => {
+            if (opt.selected) opt.setAttribute("selected", "true");
+            else opt.removeAttribute("selected");
+          });
+        }
+      });
 
-    // Radios and checkboxes
-    if (el.type === "radio" || el.type === "checkbox") {
-      if (el.checked) el.setAttribute("checked", "true");
-      else el.removeAttribute("checked");
-    }
-  } else if (el instanceof HTMLSelectElement) {
-    // Selects
-    Array.from(el.options).forEach(opt => {
-      if (opt.selected) opt.setAttribute("selected", "true");
-      else opt.removeAttribute("selected");
-    });
-  }
-});
+      const clone = element.cloneNode(true) as HTMLElement;
+      const submitBtn = Array.from(clone.querySelectorAll("button")).find((btn) => btn.textContent?.trim() === "Submit");
+      if (submitBtn) submitBtn.remove();
+      // Convert to HTML string
+      // const htmlString = element.outerHTML;
 
-const clone = element.cloneNode(true) as HTMLElement;
-const submitBtn = Array.from(clone.querySelectorAll("button")).find(
-  btn => btn.textContent?.trim() === "Submit"
-);
-if (submitBtn) submitBtn.remove();
-  // Convert to HTML string
-  // const htmlString = element.outerHTML;
-  
-const htmlString = `
+      const htmlString = `
   <html>
     <head>${styleTags}</head>
     <body>${clone.outerHTML}</body>
   </html>
 `;
 
-  const fileName = `${studentNameInput}-${campName}-${assessmentType?.toString().toUpperCase()} Assessment.pdf`;
+      const fileName = `${studentNameInput}-${campName}-${assessmentType?.toString().toUpperCase()} Assessment.pdf`;
 
-  await fetch("/api/upload-assessment", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ html: htmlString, fileName }), // ✅ pass string, not element
-  });
-}
-
-
+      await fetch("/api/upload-assessment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html: htmlString, fileName }), // ✅ pass string, not element
+      });
+    }
   };
 
   const openDialog = () => {
@@ -192,11 +181,15 @@ const htmlString = `
 
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-center gap-10">
           <div className="flex flex-col">
-            <label htmlFor="studentName" className="font-medium text-sm mb-1">Student Name</label>
+            <label htmlFor="studentName" className="font-medium text-sm mb-1">
+              Student Name
+            </label>
             <input id="studentName" type="text" placeholder="Enter your name" className="px-3 py-2 border border-[#568F87] rounded bg-[#FFF5F2] focus:outline-none focus:ring-2 focus:ring-[#568F87]" />
           </div>
           <div className="flex flex-col">
-            <label htmlFor="assessmentDate" className="font-medium text-sm mb-1">Date</label>
+            <label htmlFor="assessmentDate" className="font-medium text-sm mb-1">
+              Date
+            </label>
             <input id="assessmentDate" type="date" defaultValue={new Date().toISOString().split("T")[0]} className="px-3 py-2 border border-[#568F87] rounded bg-[#FFF5F2] focus:outline-none focus:ring-2 focus:ring-[#568F87]" />
           </div>
         </div>
@@ -208,7 +201,9 @@ const htmlString = `
             case "mcq":
               return (
                 <div key={idx} className="p-4 rounded-lg bg-[#f9f9f9] shadow-md">
-                  <p className="font-semibold mb-2">{idx + 1}. {q.question}</p>
+                  <p className="font-semibold mb-2">
+                    {idx + 1}. {q.question}
+                  </p>
                   <div className="flex flex-col gap-2">
                     {q.options.map((opt: string, i: number) => {
                       const isCorrect = submitted && opt === q.answer;
@@ -227,7 +222,9 @@ const htmlString = `
               const allCorrectAnswers: string[] = q.blanks.map((b: any) => b.answer);
               return (
                 <div key={idx} className="p-4 rounded-lg bg-[#f9f9f9] shadow-md">
-                  <p className="font-semibold mb-1">{idx + 1}. {q.question}</p>
+                  <p className="font-semibold mb-1">
+                    {idx + 1}. {q.question}
+                  </p>
                   <p className="text-sm text-gray-600 italic mb-2">Each answer is used only once.</p>
                   <ul className="ml-6 list-disc space-y-2">
                     {q.blanks.map((b: any, i: number) => {
@@ -238,14 +235,13 @@ const htmlString = `
                       return (
                         <li key={i} className="text-base">
                           {parts[0]}
-                          <select
-                            className={`mx-1 px-2 py-1 border rounded bg-[#FFF5F2] focus:outline-none focus:ring-2 focus:ring-[#568F87] ${correct ? "bg-green-100" : ""} ${wrong ? "bg-red-100" : ""}`}
-                            disabled={submitted}
-                            value={userVal || ""}
-                            onChange={(e) => handleChange(`${idx}-${i}`, e.target.value)}
-                          >
+                          <select className={`mx-1 px-2 py-1 border rounded bg-[#FFF5F2] focus:outline-none focus:ring-2 focus:ring-[#568F87] ${correct ? "bg-green-100" : ""} ${wrong ? "bg-red-100" : ""}`} disabled={submitted} value={userVal || ""} onChange={(e) => handleChange(`${idx}-${i}`, e.target.value)}>
                             <option value="">--Select--</option>
-                            {allCorrectAnswers.map((opt, j) => <option key={j} value={opt}>{opt}</option>)}
+                            {allCorrectAnswers.map((opt, j) => (
+                              <option key={j} value={opt}>
+                                {opt}
+                              </option>
+                            ))}
                           </select>
                           {correct && " ✅"} {wrong && " ❌"}
                           {parts[1] || ""}
@@ -260,7 +256,9 @@ const htmlString = `
               const allDescriptions: string[] = q.matches.map((m: any) => m.description);
               return (
                 <div key={idx} className="p-4 rounded-lg bg-[#f9f9f9] shadow-md">
-                  <p className="font-semibold mb-1">{idx + 1}. {q.question}</p>
+                  <p className="font-semibold mb-1">
+                    {idx + 1}. {q.question}
+                  </p>
                   <p className="text-sm text-gray-600 italic mb-2">Match each term to the correct meaning. Each meaning is used only once.</p>
                   <ul className="ml-6 list-disc space-y-2">
                     {q.matches.map((m: any, i: number) => {
@@ -272,14 +270,13 @@ const htmlString = `
                           <div className="flex items-center gap-4">
                             <span className="font-medium">{m.term}</span>
                             <span className="text-gray-500">→</span>
-                            <select
-                              className={`px-2 py-1 border rounded bg-[#FFF5F2] focus:outline-none focus:ring-2 focus:ring-[#568F87] ${correct ? "bg-green-100" : ""} ${wrong ? "bg-red-100" : ""}`}
-                              disabled={submitted}
-                              value={userVal || ""}
-                              onChange={(e) => handleChange(`${idx}-${i}`, e.target.value)}
-                            >
+                            <select className={`px-2 py-1 border rounded bg-[#FFF5F2] focus:outline-none focus:ring-2 focus:ring-[#568F87] ${correct ? "bg-green-100" : ""} ${wrong ? "bg-red-100" : ""}`} disabled={submitted} value={userVal || ""} onChange={(e) => handleChange(`${idx}-${i}`, e.target.value)}>
                               <option value="">--Select meaning--</option>
-                              {allDescriptions.map((desc, j) => <option key={j} value={desc}>{desc}</option>)}
+                              {allDescriptions.map((desc, j) => (
+                                <option key={j} value={desc}>
+                                  {desc}
+                                </option>
+                              ))}
                             </select>
                             {correct && " ✅"} {wrong && " ❌"}
                           </div>
@@ -297,10 +294,7 @@ const htmlString = `
 
         {/* Submit Button */}
         <div className="flex justify-center mt-6">
-          <button
-            onClick={handleSubmit}
-            className="px-6 py-3 bg-[#568F87] text-white font-bold rounded-lg hover:bg-[#4a736b] transition-transform transform hover:scale-110 hover:shadow-xl duration-300 ease-in-out"
-          >
+          <button onClick={handleSubmit} className="px-6 py-3 bg-[#568F87] text-white font-bold rounded-lg hover:bg-[#4a736b] transition-transform transform hover:scale-110 hover:shadow-xl duration-300 ease-in-out">
             Submit
           </button>
         </div>
@@ -310,13 +304,19 @@ const htmlString = `
       {showDialog && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
           <div className="bg-white text-[#a80057] p-6 rounded-lg shadow-xl w-80 text-center animate-fadeIn">
-            <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 font-bold text-lg" onClick={closeDialog}>×</button>
+            <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 font-bold text-lg" onClick={closeDialog}>
+              ×
+            </button>
             <h3 className="text-xl font-semibold mb-4">Enter Password</h3>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="w-full px-3 py-2 border rounded mb-4 focus:ring focus:ring-[#a80057] outline-none" />
             {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
             <div className="flex justify-center gap-4 mt-2">
-              <button onClick={handleAccess} className="bg-[#a80057] text-white px-4 py-2 rounded-lg hover:bg-[#910046] transition transform hover:scale-105">Submit</button>
-              <button onClick={closeDialog} className="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 transition">Cancel</button>
+              <button onClick={handleAccess} className="bg-[#a80057] text-white px-4 py-2 rounded-lg hover:bg-[#910046] transition transform hover:scale-105">
+                Submit
+              </button>
+              <button onClick={closeDialog} className="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 transition">
+                Cancel
+              </button>
             </div>
           </div>
         </div>
