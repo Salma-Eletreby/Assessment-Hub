@@ -116,7 +116,8 @@ const generatePdf = async () => {
 
     // Convert PDF to Blob
     const pdfBlob = pdf.output("blob");
-
+    console.log("PDF size in bytes:", pdfBlob.size);
+    console.log("PDF size in MB:", (pdfBlob.size / (1024 * 1024)).toFixed(2), "MB");
     // Prepare FormData
     const formData = new FormData();
     formData.append("file", pdfBlob, fileName);
