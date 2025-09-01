@@ -64,11 +64,13 @@ useEffect(() => {
     setError("");
     setShowDialog(true);
   };
+  
   const closeDialog = () => {
     setPassword("");
     setError("");
     setShowDialog(false);
   };
+
   const handleAccess = () => {
     if (password === "admin123") {
       router.push("/Logiscool/Teacher/Home");

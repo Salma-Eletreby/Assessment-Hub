@@ -1,4 +1,3 @@
-// pages/api/upload-assessment.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 import { Dropbox } from "dropbox";
 import fetch from "node-fetch";
@@ -7,7 +6,7 @@ import formidable from "formidable";
 
 export const config = {
   api: {
-    bodyParser: false, // let formidable handle the file upload
+    bodyParser: false,
   },
 };
 
@@ -46,17 +45,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(500).json({ message: "Failed to parse uploaded file" });
       }
 
-      // Grab the uploaded file
       const rawFile = files.file;
       if (!rawFile) {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      console.log("Files received:", rawFile);
-
-      // Normalize: pick the first file if it's an array
       const file: formidable.File = Array.isArray(rawFile) ? rawFile[0] : rawFile;
-console.log("Files received 2:", file);
       if (!file.filepath) {
         return res.status(400).json({ message: "Invalid file uploaded" });
       }
@@ -64,11 +58,9 @@ console.log("Files received 2:", file);
       const fileBuffer = await fs.promises.readFile(file.filepath);
       const fileName = file.originalFilename || `assessment-${Date.now()}.pdf`;
 
-      // Get Dropbox access token
       const accessToken = await getAccessTokenFromRefreshToken();
       const dbx = new Dropbox({ accessToken, fetch });
 
-      // Upload to Dropbox
       await dbx.filesUpload({
         path: `/Assessments/${fileName}`,
         contents: fileBuffer,

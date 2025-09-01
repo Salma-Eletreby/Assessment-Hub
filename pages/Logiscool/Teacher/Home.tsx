@@ -1,6 +1,6 @@
 "use client";
 import Head from "next/head";
-import React, { useState } from "react";
+import React from "react";
 import { useRouter } from "next/router";
 
 const TeacherPortal: React.FC = () => {

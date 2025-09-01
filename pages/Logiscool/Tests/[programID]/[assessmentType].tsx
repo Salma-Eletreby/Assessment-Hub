@@ -3,10 +3,8 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
-import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
 import { toJpeg } from "html-to-image";
-
 
 const programCategories = [
   { title: "Courses", link: "" },
@@ -31,7 +29,7 @@ const AssessmentPage: React.FC = () => {
   useEffect(() => {
     if (!programID || !assessmentType) return;
 
-    fetch("/data/logiscool/camps.json")
+    fetch("/api/logiscool/programs?type=camps")
       .then((res) => res.json())
       .then((data) => {
         const camp = data.find((c: any) => c.id === programID);
@@ -47,113 +45,93 @@ const AssessmentPage: React.FC = () => {
     setAnswers((prev: any) => ({ ...prev, [qIdx]: value }));
   };
 
-const generatePdf = async () => {
-  const element = document.getElementById("assessment-main");
-  if (!element) return;
+  const generatePdf = async () => {
+    const element = document.getElementById("assessment-main");
+    if (!element) return;
 
-  const prevMaxWidth = element.style.maxWidth;
-  const prevMargin = element.style.margin;
-  const submitButton = element.querySelector("button");
-  const prevButtonDisplay = submitButton?.style.display;
+    const prevMaxWidth = element.style.maxWidth;
+    const prevMargin = element.style.margin;
+    const submitButton = element.querySelector("button");
+    const prevButtonDisplay = submitButton?.style.display;
 
-  try {
-    // Hide button & remove max-width/margin
-    element.style.maxWidth = "none";
-    element.style.margin = "0";
-    if (submitButton) submitButton.style.display = "none";
+    try {
+      element.style.maxWidth = "none";
+      element.style.margin = "0";
+      if (submitButton) submitButton.style.display = "none";
+      element.style.transformOrigin = "top left";
+      element.querySelectorAll("input[type='radio']").forEach((el) => {
+        const radio = el as HTMLInputElement;
+        const name = radio.name;
+        const idx = parseInt(name.split("-")[1], 10);
+        const userAnswer = answers[idx];
 
-    // Temporarily scale element to reduce capture size
-    // element.style.transform = "scale(0.8)";
-    element.style.transformOrigin = "top left";
-element.querySelectorAll("input[type='radio']").forEach((el) => {
-  const radio = el as HTMLInputElement;
-  const name = radio.name; // e.g., "q-0"
-  const idx = parseInt(name.split("-")[1], 10); // get question index
-  const userAnswer = answers[idx]; // your state array
+        if (userAnswer === radio.value) {
+          radio.style.boxShadow = "0 0 0 2px blue";
+          radio.style.borderRadius = "50%";
+          radio.style.backgroundColor = "blue";
+        }
+      });
 
-  if (userAnswer === radio.value) {
-    radio.style.boxShadow = "0 0 0 5px blue";
-    radio.style.borderRadius = "50%";
-    radio.style.backgroundColor = "blue"; 
-    // radio.style.appearance = "none";  
-  }
-});
+      const dataUrl = await toJpeg(element, {
+        quality: 0.8,
+        pixelRatio: 2,
+        cacheBust: true,
+        backgroundColor: "#ffffff",
+      });
 
+      element.style.transform = "";
+      if (submitButton) submitButton.style.display = prevButtonDisplay || "";
+      element.style.maxWidth = prevMaxWidth;
+      element.style.margin = prevMargin;
 
-    // Capture as JPEG with compression
-    const dataUrl = await toJpeg(element, {
-      quality: 0.8, // compression
-      pixelRatio: 2,
-      cacheBust: true,
-      backgroundColor: "#ffffff",
-    });
+      const pdf = new jsPDF("p", "pt", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
 
-    // Restore styles
-    element.style.transform = "";
-    if (submitButton) submitButton.style.display = prevButtonDisplay || "";
-    element.style.maxWidth = prevMaxWidth;
-    element.style.margin = prevMargin;
+      const headerImg = new Image();
+      headerImg.src = "/LogiscoolDocHeader.png";
+      await new Promise((resolve, reject) => {
+        headerImg.onload = resolve;
+        headerImg.onerror = reject;
+      });
+      const headerHeight = (headerImg.height * pdfWidth) / headerImg.width;
+      pdf.addImage(headerImg, "JPEG", 0, 0, pdfWidth, headerHeight);
 
-    // Generate PDF
-    const pdf = new jsPDF("p", "pt", "a4");
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise((resolve) => (img.onload = resolve));
+      const ratio = pdfWidth / img.width;
+      const scaledHeight = img.height * ratio;
 
-    // Add header image
-    const headerImg = new Image();
-    headerImg.src = "/LogiscoolDocHeader.png"; // optionally compress/convert to JPEG
-    await new Promise((resolve, reject) => {
-      headerImg.onload = resolve;
-      headerImg.onerror = reject;
-    });
-    const headerHeight = (headerImg.height * pdfWidth) / headerImg.width;
-    pdf.addImage(headerImg, "JPEG", 0, 0, pdfWidth, headerHeight);
+      let position = headerHeight;
+      pdf.addImage(dataUrl, "JPEG", 0, position, pdfWidth, scaledHeight);
 
-    // Add captured content
-    const img = new Image();
-    img.src = dataUrl;
-    await new Promise((resolve) => (img.onload = resolve));
-    const ratio = pdfWidth / img.width;
-    const scaledHeight = img.height * ratio;
+      const studentNameInput = (document.getElementById("studentName") as HTMLInputElement)?.value || "student";
+      const campName = document.querySelector("h1")?.textContent?.split("–")[0]?.trim() || "Assessment";
+      const fileName = `${studentNameInput}-${campName}-Assessment.pdf`;
 
-    let position = headerHeight;
-    pdf.addImage(dataUrl, "JPEG", 0, position, pdfWidth, scaledHeight);
+      const pdfBlob = pdf.output("blob");
+      const formData = new FormData();
+      formData.append("file", pdfBlob, fileName);
 
-    // Generate file name
-    const studentNameInput = (document.getElementById("studentName") as HTMLInputElement)?.value || "student";
-    const campName = document.querySelector("h1")?.textContent?.split("–")[0]?.trim() || "Assessment";
-    const fileName = `${studentNameInput}-${campName}-Assessment.pdf`;
+      const response = await fetch("/api/upload-assessment", {
+        method: "POST",
+        body: formData,
+      });
 
-    // Convert PDF to Blob
-    const pdfBlob = pdf.output("blob");
-    console.log("PDF size in bytes:", pdfBlob.size);
-    console.log("PDF size in MB:", (pdfBlob.size / (1024 * 1024)).toFixed(2), "MB");
+      if (!response.ok) throw new Error(`Upload failed: ${response.statusText}`);
 
-    // Upload via FormData
-    const formData = new FormData();
-    formData.append("file", pdfBlob, fileName);
+      const result = await response.json();
+      alert("Assessment uploaded successfully!");
+    } catch (error) {
+      console.error("PDF generation/upload failed:", error);
+      alert("Failed to generate or upload PDF. Please try again.");
 
-    const response = await fetch("/api/upload-assessment", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) throw new Error(`Upload failed: ${response.statusText}`);
-
-    const result = await response.json();
-    console.log("Upload successful:", result);
-    alert("Assessment uploaded successfully!");
-  } catch (error) {
-    console.error("PDF generation/upload failed:", error);
-    alert("Failed to generate or upload PDF. Please try again.");
-
-    element.style.maxWidth = prevMaxWidth;
-    element.style.margin = prevMargin;
-    if (submitButton) submitButton.style.display = prevButtonDisplay || "";
-  }
-};
-
-
+      element.style.maxWidth = prevMaxWidth;
+      element.style.margin = prevMargin;
+      if (submitButton) submitButton.style.display = prevButtonDisplay || "";
+    }
+  };
 
   const handleSubmit = async () => {
     const studentNameInput = (document.getElementById("studentName") as HTMLInputElement).value.trim();
@@ -188,8 +166,7 @@ element.querySelectorAll("input[type='radio']").forEach((el) => {
 
     setSubmitted(true);
     await new Promise((resolve) => setTimeout(resolve, 50));
-    await generatePdf(); 
-
+    await generatePdf();
   };
 
   const openDialog = () => {
@@ -197,11 +174,13 @@ element.querySelectorAll("input[type='radio']").forEach((el) => {
     setError("");
     setShowDialog(true);
   };
+
   const closeDialog = () => {
     setPassword("");
     setError("");
     setShowDialog(false);
   };
+
   const handleAccess = () => {
     if (password === "admin123") {
       router.push("/Logiscool/Teacher/Home");
@@ -216,8 +195,6 @@ element.querySelectorAll("input[type='radio']").forEach((el) => {
         <title>Assessment</title>
         <meta name="description" content="Logiscool Assessment Page" />
       </Head>
-
-      {/* Navbar */}
       <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#f5f0f2] px-10 py-3">
         <div className="flex items-center gap-3 sm:gap-4 text-[#171113] cursor-pointer" onClick={() => router.push("/")}>
           <div className="size-8 sm:size-10">
@@ -238,13 +215,10 @@ element.querySelectorAll("input[type='radio']").forEach((el) => {
           </button>
         </div>
       </header>
-
-      {/* Main content */}
       <main id="assessment-main" className="flex-grow p-6 max-w-3xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold mb-6 text-center">
           {campName} – {assessmentType?.toString().toUpperCase()} Assessment
         </h1>
-
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-center gap-10">
           <div className="flex flex-col">
             <label htmlFor="studentName" className="font-medium text-sm mb-1">
@@ -259,8 +233,6 @@ element.querySelectorAll("input[type='radio']").forEach((el) => {
             <input id="assessmentDate" type="date" defaultValue={new Date().toISOString().split("T")[0]} className="px-3 py-2 border border-[#568F87] rounded bg-[#FFF5F2] focus:outline-none focus:ring-2 focus:ring-[#568F87]" />
           </div>
         </div>
-
-        {/* Questions */}
         {questions.map((q, idx) => {
           const userAnswer = answers[idx];
           switch (q.type) {
@@ -357,16 +329,12 @@ element.querySelectorAll("input[type='radio']").forEach((el) => {
               return null;
           }
         })}
-
-        {/* Submit Button */}
         <div className="flex justify-center mt-6">
           <button onClick={handleSubmit} className="px-6 py-3 bg-[#568F87] text-white font-bold rounded-lg hover:bg-[#4a736b] transition-transform transform hover:scale-110 hover:shadow-xl duration-300 ease-in-out">
             Submit
           </button>
         </div>
       </main>
-
-      {/* Teacher modal */}
       {showDialog && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
           <div className="bg-white text-[#a80057] p-6 rounded-lg shadow-xl w-80 text-center animate-fadeIn">
@@ -387,8 +355,6 @@ element.querySelectorAll("input[type='radio']").forEach((el) => {
           </div>
         </div>
       )}
-
-      {/* Footer */}
       <footer className="flex justify-center bg-[#fafafa]">
         <div className="flex flex-col gap-6 px-5 py-5 text-center">
           <p className="text-[#87646b] text-base">©2025 Salma. All rights reserved.</p>
