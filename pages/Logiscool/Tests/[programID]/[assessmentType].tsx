@@ -63,7 +63,7 @@ const generatePdf = async () => {
     const dataUrl = await toPng(element, {
       cacheBust: true,
       backgroundColor: "#ffffff",
-      pixelRatio: 2,
+      pixelRatio: 1,
     });
 
     if (submitButton) submitButton.style.display = prevButtonDisplay || "";
