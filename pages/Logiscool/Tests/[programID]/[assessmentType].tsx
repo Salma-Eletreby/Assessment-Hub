@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
+import { toPng } from "html-to-image";
+import jsPDF from "jspdf";
 
 const programCategories = [
   { title: "Courses", link: "" },
@@ -43,6 +45,107 @@ const AssessmentPage: React.FC = () => {
     setAnswers((prev: any) => ({ ...prev, [qIdx]: value }));
   };
 
+const generatePdf = async () => {
+  const element = document.getElementById("assessment-main");
+  if (!element) return;
+
+  // Same style & button hiding logic as before...
+  const prevMaxWidth = element.style.maxWidth;
+  const prevMargin = element.style.margin;
+  const submitButton = element.querySelector("button");
+  const prevButtonDisplay = submitButton?.style.display;
+
+  try {
+    element.style.maxWidth = "none";
+    element.style.margin = "0";
+    if (submitButton) submitButton.style.display = "none";
+
+    const dataUrl = await toPng(element, {
+      cacheBust: true,
+      backgroundColor: "#ffffff",
+      pixelRatio: 2,
+    });
+
+    if (submitButton) submitButton.style.display = prevButtonDisplay || "";
+    element.style.maxWidth = prevMaxWidth;
+    element.style.margin = prevMargin;
+
+    const pdf = new jsPDF("p", "pt", "a4");
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    // Add header
+    const headerImg = new Image();
+    headerImg.src = "/LogiscoolDocHeader.png";
+    await new Promise((resolve, reject) => {
+      headerImg.onload = resolve;
+      headerImg.onerror = reject;
+    });
+
+    const headerHeight = (headerImg.height * pdfWidth) / headerImg.width;
+    pdf.addImage(headerImg, "PNG", 0, 0, pdfWidth, headerHeight);
+
+    // Add captured image
+    const img = new Image();
+    img.src = dataUrl;
+    await new Promise((resolve) => (img.onload = resolve));
+
+    const imgWidth = img.width;
+    const imgHeight = img.height;
+    const ratio = pdfWidth / imgWidth;
+    const scaledHeight = imgHeight * ratio;
+
+    let position = headerHeight;
+    let remainingHeight = scaledHeight;
+
+    while (remainingHeight > 0) {
+      pdf.addImage(dataUrl, "PNG", 0, position, pdfWidth, scaledHeight);
+      remainingHeight -= pdfHeight - headerHeight;
+      position -= pdfHeight;
+      if (remainingHeight > 0) {
+        pdf.addPage();
+        pdf.addImage(headerImg, "PNG", 0, 0, pdfWidth, headerHeight);
+        position = headerHeight;
+      }
+    }
+
+    // Generate file name
+    const studentNameInput = (document.getElementById("studentName") as HTMLInputElement)?.value || "student";
+    const campName = document.querySelector("h1")?.textContent?.split("–")[0]?.trim() || "Assessment";
+    const fileName = `${studentNameInput}-${campName}-${assessmentType?.toString().toUpperCase()}Assessment.pdf`;
+
+    // Convert PDF to Blob
+    const pdfBlob = pdf.output("blob");
+
+    // Prepare FormData
+    const formData = new FormData();
+    formData.append("file", pdfBlob, fileName);
+
+    // Call your API
+    const response = await fetch("/api/upload-assessment", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    console.log("Upload successful:", result);
+
+    alert("Assessment uploaded successfully!\nTell the Teacher");
+  } catch (error) {
+    console.error("PDF generation/upload failed:", error);
+    alert("Failed to generate or upload PDF. Please try again.");
+
+    element.style.maxWidth = prevMaxWidth;
+    element.style.margin = prevMargin;
+    if (submitButton) submitButton.style.display = prevButtonDisplay || "";
+  }
+};
+
+
   const handleSubmit = async () => {
     const studentNameInput = (document.getElementById("studentName") as HTMLInputElement).value.trim();
     if (!studentNameInput) {
@@ -76,54 +179,8 @@ const AssessmentPage: React.FC = () => {
 
     setSubmitted(true);
     await new Promise((resolve) => setTimeout(resolve, 50));
+    await generatePdf(); 
 
-    const element = document.getElementById("assessment-main");
-    const styleTags = Array.from(document.querySelectorAll("style, link[rel='stylesheet']"))
-      .map((el) => el.outerHTML)
-      .join("\n");
-
-    if (element) {
-      // Fill input/select values and checked states
-      element.querySelectorAll("input, select").forEach((el) => {
-        if (el instanceof HTMLInputElement) {
-          // Text inputs
-          el.setAttribute("value", el.value);
-
-          // Radios and checkboxes
-          if (el.type === "radio" || el.type === "checkbox") {
-            if (el.checked) el.setAttribute("checked", "true");
-            else el.removeAttribute("checked");
-          }
-        } else if (el instanceof HTMLSelectElement) {
-          // Selects
-          Array.from(el.options).forEach((opt) => {
-            if (opt.selected) opt.setAttribute("selected", "true");
-            else opt.removeAttribute("selected");
-          });
-        }
-      });
-
-      const clone = element.cloneNode(true) as HTMLElement;
-      const submitBtn = Array.from(clone.querySelectorAll("button")).find((btn) => btn.textContent?.trim() === "Submit");
-      if (submitBtn) submitBtn.remove();
-      // Convert to HTML string
-      // const htmlString = element.outerHTML;
-
-      const htmlString = `
-  <html>
-    <head>${styleTags}</head>
-    <body>${clone.outerHTML}</body>
-  </html>
-`;
-
-      const fileName = `${studentNameInput}-${campName}-${assessmentType?.toString().toUpperCase()} Assessment.pdf`;
-
-      await fetch("/api/upload-assessment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html: htmlString, fileName }), // ✅ pass string, not element
-      });
-    }
   };
 
   const openDialog = () => {

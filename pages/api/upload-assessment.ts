@@ -1,100 +1,84 @@
+// pages/api/upload-assessment.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import { chromium } from "playwright";
+import { Dropbox } from "dropbox";
+import fetch from "node-fetch";
 import fs from "fs";
-import path from "path";
+import formidable from "formidable";
 
 export const config = {
   api: {
-    bodyParser: false, // we'll handle raw data manually
+    bodyParser: false, // let formidable handle the file upload
   },
 };
 
+async function getAccessTokenFromRefreshToken() {
+  const response = await fetch("https://api.dropbox.com/oauth2/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: process.env.DROPBOX_REFRESH_TOKEN!,
+      client_id: process.env.DROPBOX_CLIENT_ID!,
+      client_secret: process.env.DROPBOX_CLIENT_SECRET!,
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Failed to get access token: ${errText}`);
+  }
+
+  const data = await response.json();
+  return data.access_token as string;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") return res.status(405).json({ message: "Method not allowed" });
+  if (req.method !== "POST") {
+    return res.status(405).json({ message: "Method not allowed" });
+  }
 
   try {
-    // 1️⃣ Read raw request body
-    const chunks: Uint8Array[] = [];
-    for await (const chunk of req) {
-      chunks.push(chunk as Uint8Array);
-    }
-    const bodyBuffer = Buffer.concat(chunks);
+    const form = formidable({ multiples: false });
 
-    // 2️⃣ Parse JSON from buffer
-    const bodyJson = JSON.parse(bodyBuffer.toString("utf-8"));
-    let { html, fileName } = bodyJson;
-    if (!html) return res.status(400).json({ message: "HTML content is required" });
+    form.parse(req, async (err, fields, files) => {
+      if (err) {
+        console.error("Form parse error:", err);
+        return res.status(500).json({ message: "Failed to parse uploaded file" });
+      }
 
-    // 3️⃣ Read header image from public folder and convert to Base64
-    const imagePath = path.join(process.cwd(), "public", "LogiscoolDocHeader.png");
-    let imageBase64 = "";
-    if (fs.existsSync(imagePath)) {
-      const imageBuffer = fs.readFileSync(imagePath);
-      imageBase64 = imageBuffer.toString("base64");
-    }
+      // Grab the uploaded file
+      const rawFile = files.file;
+      if (!rawFile) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
 
-    // 4️⃣ Inject header image into HTML
-    const htmlWithHeader = `
-      <html>
-        <head>
-          <meta charset="UTF-8">
-          <style>
-            /* Optional: add some basic styling or Tailwind here if needed */
-          </style>
-        </head>
-        <body>
-          ${imageBase64 ? `<div style="text-align:center; margin-bottom:-40px;">
-            <img src="data:image/png;base64,${imageBase64}" style="max-width:100%; height:auto;" />
-          </div>` : ""}
-          ${html}
-        </body>
-      </html>
-    `;
+      // Normalize: pick the first file if it's an array
+      const file: formidable.File = Array.isArray(rawFile) ? rawFile[0] : rawFile;
 
-    // 5️⃣ Launch headless Chromium
-    const browser = await chromium.launch();
-    const page = await browser.newPage();
-    await page.setContent(htmlWithHeader, { waitUntil: "networkidle" });
+      if (!file.filepath) {
+        return res.status(400).json({ message: "Invalid file uploaded" });
+      }
 
-    // 6️⃣ Generate PDF
-    const pdfBuffer = await page.pdf({
-      format: "A4",
-      printBackground: true,
-      margin: { top: "20px", bottom: "20px", left: "20px", right: "20px" },
-      scale: 0.65,
+      const fileBuffer = await fs.promises.readFile(file.filepath);
+      const fileName = file.originalFilename || `assessment-${Date.now()}.pdf`;
+
+      // Get Dropbox access token
+      const accessToken = await getAccessTokenFromRefreshToken();
+      const dbx = new Dropbox({ accessToken, fetch });
+
+      // Upload to Dropbox
+      await dbx.filesUpload({
+        path: `/Assessments/${fileName}`,
+        contents: fileBuffer,
+        mode: { ".tag": "add" },
+        autorename: true,
+        mute: false,
+      });
+
+      res.status(200).json({ message: "PDF uploaded successfully!", fileName });
     });
-
-    await browser.close();
-
-    // 7️⃣ Upload to Dropbox
-    const dropboxToken = process.env.DROPBOX_TOKEN;
-    if (!dropboxToken) throw new Error("Dropbox token is missing!");
-
-    const uploadFileName = fileName || `assessment-${Date.now()}.pdf`;
-
-    const response = await fetch("https://content.dropboxapi.com/2/files/upload", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${dropboxToken}`,
-        "Content-Type": "application/octet-stream",
-        "Dropbox-API-Arg": JSON.stringify({
-          path: `/Assessments/${uploadFileName}`,
-          mode: "add",
-          autorename: true,
-          mute: false,
-        }),
-      },
-      body: new Uint8Array(pdfBuffer),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Dropbox upload failed: ${errText}`);
-    }
-
-    res.status(200).json({ message: "PDF generated and uploaded successfully!", fileName: uploadFileName });
   } catch (err: any) {
-    console.error(err);
-    res.status(500).json({ message: err.message });
+    console.error("Upload assessment error:", err);
+    res.status(500).json({ message: err.message || "Internal server error" });
   }
 }
