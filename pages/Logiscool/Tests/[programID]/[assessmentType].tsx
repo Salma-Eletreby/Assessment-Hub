@@ -63,13 +63,27 @@ const generatePdf = async () => {
     if (submitButton) submitButton.style.display = "none";
 
     // Temporarily scale element to reduce capture size
-    element.style.transform = "scale(0.8)";
+    // element.style.transform = "scale(0.8)";
     element.style.transformOrigin = "top left";
+element.querySelectorAll("input[type='radio']").forEach((el) => {
+  const radio = el as HTMLInputElement;
+  const name = radio.name; // e.g., "q-0"
+  const idx = parseInt(name.split("-")[1], 10); // get question index
+  const userAnswer = answers[idx]; // your state array
+
+  if (userAnswer === radio.value) {
+    radio.style.boxShadow = "0 0 0 5px blue";
+    radio.style.borderRadius = "50%";
+    radio.style.backgroundColor = "blue"; 
+    // radio.style.appearance = "none";  
+  }
+});
+
 
     // Capture as JPEG with compression
     const dataUrl = await toJpeg(element, {
       quality: 0.8, // compression
-      pixelRatio: 1,
+      pixelRatio: 2,
       cacheBust: true,
       backgroundColor: "#ffffff",
     });
