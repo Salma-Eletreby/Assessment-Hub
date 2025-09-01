@@ -52,9 +52,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ message: "No file uploaded" });
       }
 
+      console.log("Files received:", rawFile);
+
       // Normalize: pick the first file if it's an array
       const file: formidable.File = Array.isArray(rawFile) ? rawFile[0] : rawFile;
-
+console.log("Files received 2:", file);
       if (!file.filepath) {
         return res.status(400).json({ message: "Invalid file uploaded" });
       }
