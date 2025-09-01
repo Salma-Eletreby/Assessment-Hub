@@ -5,6 +5,8 @@ import Head from "next/head";
 import Link from "next/link";
 import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
+import { toJpeg } from "html-to-image";
+
 
 const programCategories = [
   { title: "Courses", link: "" },
@@ -49,93 +51,84 @@ const generatePdf = async () => {
   const element = document.getElementById("assessment-main");
   if (!element) return;
 
-  // Same style & button hiding logic as before...
   const prevMaxWidth = element.style.maxWidth;
   const prevMargin = element.style.margin;
   const submitButton = element.querySelector("button");
   const prevButtonDisplay = submitButton?.style.display;
 
   try {
+    // Hide button & remove max-width/margin
     element.style.maxWidth = "none";
     element.style.margin = "0";
     if (submitButton) submitButton.style.display = "none";
 
-    const dataUrl = await toPng(element, {
+    // Temporarily scale element to reduce capture size
+    element.style.transform = "scale(0.8)";
+    element.style.transformOrigin = "top left";
+
+    // Capture as JPEG with compression
+    const dataUrl = await toJpeg(element, {
+      quality: 0.8, // compression
+      pixelRatio: 1,
       cacheBust: true,
       backgroundColor: "#ffffff",
-      pixelRatio: 1,
     });
 
+    // Restore styles
+    element.style.transform = "";
     if (submitButton) submitButton.style.display = prevButtonDisplay || "";
     element.style.maxWidth = prevMaxWidth;
     element.style.margin = prevMargin;
 
+    // Generate PDF
     const pdf = new jsPDF("p", "pt", "a4");
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
 
-    // Add header
+    // Add header image
     const headerImg = new Image();
-    headerImg.src = "/LogiscoolDocHeader.png";
+    headerImg.src = "/LogiscoolDocHeader.png"; // optionally compress/convert to JPEG
     await new Promise((resolve, reject) => {
       headerImg.onload = resolve;
       headerImg.onerror = reject;
     });
-
     const headerHeight = (headerImg.height * pdfWidth) / headerImg.width;
-    pdf.addImage(headerImg, "PNG", 0, 0, pdfWidth, headerHeight);
+    pdf.addImage(headerImg, "JPEG", 0, 0, pdfWidth, headerHeight);
 
-    // Add captured image
+    // Add captured content
     const img = new Image();
     img.src = dataUrl;
     await new Promise((resolve) => (img.onload = resolve));
-
-    const imgWidth = img.width;
-    const imgHeight = img.height;
-    const ratio = pdfWidth / imgWidth;
-    const scaledHeight = imgHeight * ratio;
+    const ratio = pdfWidth / img.width;
+    const scaledHeight = img.height * ratio;
 
     let position = headerHeight;
-    let remainingHeight = scaledHeight;
-
-    while (remainingHeight > 0) {
-      pdf.addImage(dataUrl, "PNG", 0, position, pdfWidth, scaledHeight);
-      remainingHeight -= pdfHeight - headerHeight;
-      position -= pdfHeight;
-      if (remainingHeight > 0) {
-        pdf.addPage();
-        pdf.addImage(headerImg, "PNG", 0, 0, pdfWidth, headerHeight);
-        position = headerHeight;
-      }
-    }
+    pdf.addImage(dataUrl, "JPEG", 0, position, pdfWidth, scaledHeight);
 
     // Generate file name
     const studentNameInput = (document.getElementById("studentName") as HTMLInputElement)?.value || "student";
     const campName = document.querySelector("h1")?.textContent?.split("–")[0]?.trim() || "Assessment";
-    const fileName = `${studentNameInput}-${campName}-${assessmentType?.toString().toUpperCase()}Assessment.pdf`;
+    const fileName = `${studentNameInput}-${campName}-Assessment.pdf`;
 
     // Convert PDF to Blob
     const pdfBlob = pdf.output("blob");
     console.log("PDF size in bytes:", pdfBlob.size);
     console.log("PDF size in MB:", (pdfBlob.size / (1024 * 1024)).toFixed(2), "MB");
-    // Prepare FormData
+
+    // Upload via FormData
     const formData = new FormData();
     formData.append("file", pdfBlob, fileName);
 
-    // Call your API
     const response = await fetch("/api/upload-assessment", {
       method: "POST",
       body: formData,
     });
 
-    if (!response.ok) {
-      throw new Error(`Upload failed: ${response.statusText}`);
-    }
+    if (!response.ok) throw new Error(`Upload failed: ${response.statusText}`);
 
     const result = await response.json();
     console.log("Upload successful:", result);
-
-    alert("Assessment uploaded successfully!\nTell the Teacher");
+    alert("Assessment uploaded successfully!");
   } catch (error) {
     console.error("PDF generation/upload failed:", error);
     alert("Failed to generate or upload PDF. Please try again.");
@@ -145,6 +138,7 @@ const generatePdf = async () => {
     if (submitButton) submitButton.style.display = prevButtonDisplay || "";
   }
 };
+
 
 
   const handleSubmit = async () => {
