@@ -7,7 +7,7 @@ import jsPDF from "jspdf";
 import { toJpeg } from "html-to-image";
 
 const programCategories = [
-  { title: "Courses", link: "" },
+  { title: "Courses", link: "Logiscool/Programs/Courses" },
   { title: "Short Courses", link: "" },
   { title: "Camps", link: "Logiscool/Programs/Camps" },
   { title: "Workshops", link: "" },
@@ -19,7 +19,7 @@ const AssessmentPage: React.FC = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { programID, assessmentType } = router.query;
+  const { programType,programID, assessmentType } = router.query;
 
   const [questions, setQuestions] = useState<any[]>([]);
   const [campName, setCampName] = useState("");
@@ -29,7 +29,7 @@ const AssessmentPage: React.FC = () => {
   useEffect(() => {
     if (!programID || !assessmentType) return;
 
-    fetch("/api/logiscool/programs?type=camps")
+    fetch(`/api/logiscool/programs?type=${programType}`)
       .then((res) => res.json())
       .then((data) => {
         const camp = data.find((c: any) => c.id === programID);

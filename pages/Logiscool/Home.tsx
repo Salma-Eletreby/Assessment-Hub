@@ -33,7 +33,7 @@ const LogiscoolLandingPage: React.FC = () => {
     {
       title: "Courses",
       img: "https://lh3.googleusercontent.com/aida-public/AB6AXuDbCgn4UqiumBpeofHiNHci_p3uh0G5okZ545k625rK3aES9pXs6_01wOzDoY48DLibqYepWirw-wNlTjld9vufBexbxBpCVJ-A0Y2vSuvdDflgb8TbS4jOzsM9jdXRgFE4uvwB6zn5Olrhx8_tHmY_2_h0WK2aVy2864knTIk1A8L-IRvWAxFvo68-RRvdRDMEaGNp6TeL2CIZDj2na2cR6BoXU8x-kACMyciiWHpf1wUN542YdelcWi-FvIIjzXjmSz_Qc6Yj99g",
-      link: "",
+      link: "Programs/Courses",
     },
     {
       title: "Short Courses",

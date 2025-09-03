@@ -44,7 +44,7 @@ const CampsPage: React.FC = () => {
   ];
 
 useEffect(() => {
-  fetch("/api/logiscool/programs?type=camps")
+  fetch("/api/logiscool/programs?type=courses")
     .then((res) => res.json())
     .then((data: Camp[]) => setCamps(data))
     .catch((err) => console.error("Error loading camps:", err));
@@ -157,7 +157,7 @@ useEffect(() => {
                     </div>
                     <div className="flex flex-col sm:flex-row sm:justify-center gap-2 mt-3 flex-wrap">
                       {camp.assesments.map((a) => (
-                        <button key={a.id} onClick={() => router.push(`/Logiscool/Tests/camps/${camp.id}/${a.type}`)} className="flex min-w-[84px] items-center justify-center rounded-lg h-8 px-3 bg-[#F5BABB] text-[#064232] font-medium hover:bg-[#568F87] hover:text-white transition transform hover:scale-105">
+                        <button key={a.id} onClick={() => router.push(`/Logiscool/Tests/courses/${camp.id}/${a.type}`)} className="flex min-w-[84px] items-center justify-center rounded-lg h-8 px-3 bg-[#F5BABB] text-[#064232] font-medium hover:bg-[#568F87] hover:text-white transition transform hover:scale-105">
                           {a.type === "pre" ? "Pre-Assessment" : "Post-Assessment"}
                         </button>
                       ))}

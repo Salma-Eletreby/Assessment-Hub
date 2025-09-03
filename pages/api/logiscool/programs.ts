@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         collectionName = "LogiscoolCamps";
         break;
       case "courses":
-        collectionName = "courses";
+        collectionName = "LogiscoolCourses";
         break;
       case "workshops":
         collectionName = "workshops";
