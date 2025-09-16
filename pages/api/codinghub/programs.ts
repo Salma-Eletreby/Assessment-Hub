@@ -14,29 +14,7 @@ async function connectToDatabase() {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const db = await connectToDatabase();
-    const { type } = req.query;
-
-    if (!type || typeof type !== "string") {
-      return res.status(400).json({ error: "Missing or invalid 'type' query parameter" });
-    }
-
-    let collectionName: string;
-    
-    switch (type.toLowerCase()) {
-      case "camps":
-        collectionName = "LogiscoolCamps";
-        break;
-      case "courses":
-        collectionName = "LogiscoolCourses";
-        break;
-      case "workshops":
-        collectionName = "workshops";
-        break;
-      default:
-        return res.status(400).json({ error: `Unknown type: ${type}` });
-    }
-    
-    const collection = db.collection(collectionName);
+    const collection = db.collection("CodingHub");
     const programs = await collection.find({}).toArray();
     
     res.status(200).json(programs);

@@ -82,7 +82,7 @@ useEffect(() => {
   return (
     <div className="relative flex min-h-screen flex-col bg-white overflow-x-hidden" style={{ fontFamily: 'Lexend, "Noto Sans", sans-serif' }}>
       <Head>
-        <title>Camps</title>
+        <title>Courses</title>
         <meta name="description" content="Logiscool Camps Page" />
       </Head>
       <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#f5f0f2] px-10 py-3">
@@ -116,7 +116,7 @@ useEffect(() => {
                       <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
                     </svg>
                   </div>
-                  <input type="text" placeholder="Search for camps" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#181116] focus:outline-0 focus:ring-0 border-none bg-[#f9f0f3] focus:border-none h-full placeholder:text-[#816178] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" />
+                  <input type="text" placeholder="Search for courses" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#181116] focus:outline-0 focus:ring-0 border-none bg-[#f9f0f3] focus:border-none h-full placeholder:text-[#816178] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" />
                 </div>
               </label>
             </div>
@@ -133,7 +133,7 @@ useEffect(() => {
                 </button>
               ))}
             </div>
-            <h2 className="text-[#064232] text-[22px] font-bold px-4 pb-3 pt-5 text-center">Available Camps</h2>
+            <h2 className="text-[#064232] text-[22px] font-bold px-4 pb-3 pt-5 text-center">Available Courses</h2>
             {filteredCamps.length === 0 ? (
               <div className="text-[#064232] flex flex-col items-center gap-6 px-4 py-6">
                 <div
@@ -143,8 +143,8 @@ useEffect(() => {
                   }}
                 />
                 <div className="flex max-w-[480px] flex-col items-center gap-2">
-                  <p className="text-lg font-bold text-center">No Camps Available</p>
-                  <p className="text-sm text-center">Currently, there are no camps available that fit your search</p>
+                  <p className="text-lg font-bold text-center">No Courses Available</p>
+                  <p className="text-sm text-center">Currently, there are no courses available that fit your search</p>
                 </div>
               </div>
             ) : (
