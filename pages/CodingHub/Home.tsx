@@ -64,7 +64,7 @@ const CodingHubLandingPage: React.FC = () => {
 
   const handleAccess = () => {
     if (password === "admin123") {
-      router.push("/educenter/assessments");
+      router.push("/CodingHub/Admin/Home");
     } else {
       setError("Incorrect password. Please try again.");
     }

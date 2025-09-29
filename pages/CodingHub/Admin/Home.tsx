@@ -8,8 +8,8 @@ const TeacherPortal: React.FC = () => {
   return (
     <div className="relative flex min-h-screen flex-col bg-white overflow-x-hidden" style={{ fontFamily: 'Lexend, "Noto Sans", sans-serif' }}>
       <Head>
-        <title>Logiscool Teacher</title>
-        <meta name="description" content="Logiscool's Teacher Portal" />
+        <title>Coding Hub Admin</title>
+        <meta name="description" content="Coding Hub CRM" />
       </Head>
       <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#f5f0f2] px-10 py-3">
         <div className="flex items-center gap-3 sm:gap-4 text-[#171113] cursor-pointer" onClick={() => router.push("/")}>
@@ -20,11 +20,11 @@ const TeacherPortal: React.FC = () => {
         </div>
         <div className="flex flex-1 justify-end gap-8">
           <div className="flex items-center gap-9">
-            <a className="text-[#181015] text-sm font-medium leading-normal hover:underline" href="/Logiscool/Home">
-              Back to Logiscool
+            <a className="text-[#181015] text-sm font-medium leading-normal hover:underline" href="/CodingHub/Home">
+              Back to Coding Hub
             </a>
-            <a className="text-[#181015] text-sm font-medium leading-normal hover:underline" href="/Logiscool/Teacher/Home">
-              Back to Teacher Portal
+            <a className="text-[#181015] text-sm font-medium leading-normal hover:underline" href="/CodingHub/Admin/Home">
+              Back to Admin Portal
             </a>
           </div>
         </div>
@@ -33,19 +33,15 @@ const TeacherPortal: React.FC = () => {
         <div className="flex flex-col max-w-[960px] flex-1">
           <div className="flex flex-wrap justify-between gap-3 p-4">
             <div className="flex min-w-72 flex-col gap-3">
-              <p className="text-3xl font-bold text-[#111816]">Teacher Portal</p>
-              <p className="text-sm text-[#568F87]">Manage your courses and workshops</p>
+              <p className="text-3xl font-bold text-[#111816]">Coding Hub CRM</p>
+              <p className="text-sm text-[#568F87]">Manage your assesments or sessions</p>
             </div>
           </div>
           <div className="flex justify-center">
             <div className="flex flex-col gap-3 w-full max-w-[480px] px-4 py-3">
               {[
-                { label: "Courses", path: "/Logiscool/Teacher/Courses" },
-                { label: "Short Courses", path: "/Logiscool/Teacher/ShortCourses" },
-                { label: "Camps", path: "/Logiscool/Teacher/Camps" },
-                { label: "Workshops", path: "/Logiscool/Teacher/Workshops" },
-                { label: "Long Workshop", path: "/Logiscool/Teacher/LongWorkshop" },
-                { label: "Badges", path: "/Logiscool/Teacher/Badges" }
+                { label: "CRM", path: "/CodingHub/Admin/CRM/Home" },
+                { label: "Assesments", path: "/CodingHub/Admin/Assessments" },
               ].map(({ label, path }) => (
                 <button key={label} onClick={() => router.push(path)} className="h-12 w-full rounded-lg bg-[#568F87] text-white text-base font-bold tracking-wide shadow-md transition hover:bg-[#064232] hover:scale-105">
                   {label}
