@@ -34,7 +34,7 @@ const TeacherPortal: React.FC = () => {
           <div className="flex flex-wrap justify-between gap-3 p-4">
             <div className="flex min-w-72 flex-col gap-3">
               <p className="text-3xl font-bold text-[#111816]">Coding Hub CRM</p>
-              <p className="text-sm text-[#568F87]">Manage your assesments or sessions</p>
+              <p className="text-sm text-[#00426b]">Manage your assesments or sessions</p>
             </div>
           </div>
           <div className="flex justify-center">
@@ -42,8 +42,9 @@ const TeacherPortal: React.FC = () => {
               {[
                 { label: "CRM", path: "/CodingHub/Admin/CRM/Home" },
                 { label: "Assesments", path: "/CodingHub/Admin/Assessments" },
+                {label: "Teaching Material", path: "/CodingHub/Admin/Material" },
               ].map(({ label, path }) => (
-                <button key={label} onClick={() => router.push(path)} className="h-12 w-full rounded-lg bg-[#568F87] text-white text-base font-bold tracking-wide shadow-md transition hover:bg-[#064232] hover:scale-105">
+                <button key={label} onClick={() => router.push(path)} className="h-12 w-full rounded-lg bg-[#0077a8] text-white text-base font-bold tracking-wide shadow-md transition hover:bg-[#00426b] hover:scale-105">
                   {label}
                 </button>
               ))}

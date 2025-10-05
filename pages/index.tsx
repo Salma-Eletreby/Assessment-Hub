@@ -25,7 +25,7 @@ const AssesmentCenterLandingPage: React.FC = () => {
           <div
             className="p-4 flex min-h-[480px] flex-col items-center justify-center gap-6 rounded-lg bg-cover bg-center bg-no-repeat"
             style={{
-              backgroundImage: "linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.4)), url('https://lh3.googleusercontent.com/aida-public/AB6AXuCpT4oXrrHMksZeFcG1mLsx99UJVp20owWrrz3xbg38uSk_mCI6FBJFmBeBKju7FHDTmjixOFD5wx_ORv3PBDNG3Rfx1jaoYbP0u0B8NX3wPeHFEwJ3gZGvtYp8FZnE7Q8UI73sL5HoiaUlOlfqT7zDWMXokxFiqPanvZbavWFx4vn30xI71r7go2VwnHK21RtKVBa7UUos0OpFo0l-y5i56FsMtGLskA-ORVkPGTGIF4lMY-9Hgkl9zUj10CJ9ChX8dX3W5tyzDI8')",
+              backgroundImage: "linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.4)), url('\LandingPage.png')",
             }}
           >
             <div className="flex flex-col gap-2 text-center">

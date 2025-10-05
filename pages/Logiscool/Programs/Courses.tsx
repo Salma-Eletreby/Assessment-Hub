@@ -139,7 +139,7 @@ useEffect(() => {
                 <div
                   className="bg-center bg-no-repeat aspect-video bg-cover rounded-lg w-full max-w-[360px]"
                   style={{
-                    backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAhSGOTnSSitXqSUGcl-VK8DH-TFoNcVakyBaHwNdkHlwr9avpp1kcFcwx11_uYAC0MHFWyt_EhcX9u5gpInecDytHyoaoA-BW7qMXeyGUVjCN2aG50Dqp3crvH71CLsSXcsT2VTOAeCXOpQ4hhFOZvowUyJgnxO52uAg7wjOGgz3aGRAj70KeVNCY_NzQM7N_AabCEHxUoF2A42Hn51n7y202iv1Yp6IZ7L3QIgJIvhNbCRV5FuabbIxkOreNNqRH0Hx0VlpfCInk')",
+                    backgroundImage: "url('/Nothing.png')",
                   }}
                 />
                 <div className="flex max-w-[480px] flex-col items-center gap-2">
