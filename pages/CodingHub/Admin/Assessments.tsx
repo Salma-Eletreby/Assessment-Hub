@@ -27,7 +27,7 @@ const TeacherCourses: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      const res = await fetch("/api/logiscool/file?name=LogiscoolCourses", {
+      const res = await fetch("/api/codinghub/file?name=CodingHubMaterials", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: jsonContent,
