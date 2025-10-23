@@ -35,13 +35,13 @@ const CampsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("All");
 
-  const programCategories = [
-    { title: "Courses", link: "Programs/Courses" },
-    { title: "Short Courses", link: "" },
-    { title: "Camps", link: "Programs/Camps" },
-    { title: "Workshops", link: "" },
-    { title: "Long Workshops", link: "" },
-  ];
+const programCategories = [
+  { title: "Courses", link: "Logiscool/Programs/Courses" },
+  // { title: "Short Courses", link: "" },
+  { title: "Camps", link: "Logiscool/Programs/Camps" },
+  // { title: "Workshops", link: "" },
+  // { title: "Long Workshops", link: "" },
+];
 
 useEffect(() => {
   fetch("/api/logiscool/programs?type=camps")
