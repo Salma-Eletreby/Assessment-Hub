@@ -35,26 +35,26 @@ const LogiscoolLandingPage: React.FC = () => {
       img: "/Courses.png",
       link: "Programs/Courses",
     },
-    {
-      title: "Short Courses",
-      img: "/ShortCourses.png",
-      link: "",
-    },
+    // {
+    //   title: "Short Courses",
+    //   img: "/ShortCourses.png",
+    //   link: "",
+    // },
     {
       title: "Camps",
       img: "/Camps.png",
       link: "Programs/Camps",
     },
-    {
-      title: "Workshops",
-      img: "/Workshops.png",
-      link: "",
-    },
-    {
-      title: "Long Workshops",
-      img: "/LongWorkshops.png",
-      link: "",
-    },
+    // {
+    //   title: "Workshops",
+    //   img: "/Workshops.png",
+    //   link: "",
+    // },
+    // {
+    //   title: "Long Workshops",
+    //   img: "/LongWorkshops.png",
+    //   link: "",
+    // },
   ];
 
   return (

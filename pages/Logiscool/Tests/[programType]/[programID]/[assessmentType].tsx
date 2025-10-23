@@ -8,10 +8,10 @@ import { toJpeg } from "html-to-image";
 
 const programCategories = [
   { title: "Courses", link: "Logiscool/Programs/Courses" },
-  { title: "Short Courses", link: "" },
+  // { title: "Short Courses", link: "" },
   { title: "Camps", link: "Logiscool/Programs/Camps" },
-  { title: "Workshops", link: "" },
-  { title: "Long Workshops", link: "" },
+  // { title: "Workshops", link: "" },
+  // { title: "Long Workshops", link: "" },
 ];
 
 const AssessmentPage: React.FC = () => {
