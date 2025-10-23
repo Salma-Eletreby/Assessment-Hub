@@ -10,7 +10,7 @@ const TeacherCourses: React.FC = () => {
 
   const loadJson = async () => {
     try {
-      const res = await fetch("/api/codinghub/file?name=CodingHubMaterials");
+      const res = await fetch("/api/codinghub/file?name=CodingHub");
       if (!res.ok) throw new Error("Failed to load JSON");
       const data = await res.json();
       setJsonContent(JSON.stringify(data, null, 2));
@@ -27,7 +27,7 @@ const TeacherCourses: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      const res = await fetch("/api/codinghub/file?name=CodingHubMaterials", {
+      const res = await fetch("/api/codinghub/file?name=CodingHub", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: jsonContent,
